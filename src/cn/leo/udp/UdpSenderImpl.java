@@ -16,6 +16,20 @@ public class UdpSenderImpl implements UdpSender {
     private UdpSendCore udpSendCore = new UdpSendCore();
     private String broadcastHost;
 
+    public UdpSenderImpl() {
+    }
+
+    public UdpSenderImpl(String remoteHost, int port) {
+        this.remoteHost = remoteHost;
+        this.port = port;
+    }
+
+    public UdpSenderImpl(String remoteHost, int port, PacketProcessor packetProcessor) {
+        this.remoteHost = remoteHost;
+        this.port = port;
+        this.packetProcessor = packetProcessor;
+    }
+
     @Override
     public UdpSender setRemoteHost(String host) {
         remoteHost = host;
@@ -59,7 +73,6 @@ public class UdpSenderImpl implements UdpSender {
         try {
             InetAddress address = InetAddress.getLocalHost();
             byte[] bytes = address.getAddress();
-            System.out.println(Arrays.toString(bytes));
             bytes[3] = (byte) 255;
             broadcastHost = InetAddress.getByAddress(bytes).getHostAddress();
         } catch (UnknownHostException e) {

@@ -61,6 +61,20 @@ public class UdpFrame implements UdpListener {
         return new UdpSenderImpl();
     }
 
+    public static UdpSender getSender(int port) {
+        UdpSenderImpl udpSender = new UdpSenderImpl();
+        udpSender.setPort(port);
+        return udpSender;
+    }
+
+    public static UdpSender getSender(String host, int port) {
+        return new UdpSenderImpl(host, port);
+    }
+
+    public static UdpSender getSender(String host, int port, PacketProcessor packetProcessor) {
+        return new UdpSenderImpl(host, port, packetProcessor);
+    }
+
     public static UdpSender getSender(PacketProcessor packetProcessor) {
         UdpSenderImpl udpSender = new UdpSenderImpl();
         udpSender.setPacketProcessor(packetProcessor);
