@@ -7,7 +7,7 @@ import java.net.DatagramSocket;
  * @author : Jarry Leo
  * @date : 2019/1/25 13:17
  */
-public class UdpListenCore extends Thread {
+class UdpListenCore extends Thread {
 
     private int port;
     private DatagramSocket receiveSocket;

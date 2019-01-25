@@ -2,14 +2,13 @@ package cn.leo.udp;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Arrays;
 import java.util.List;
 
 /**
  * @author : Jarry Leo
  * @date : 2019/1/25 13:55
  */
-public class UdpSenderImpl implements UdpSender {
+class UdpSenderImpl implements UdpSender {
     private String remoteHost = "127.0.0.1";
     private int port = UdpConfig.DEFAULT_LISTEN_PORT;
     private PacketProcessor packetProcessor = new DefaultPacketProcessor();

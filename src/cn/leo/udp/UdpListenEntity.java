@@ -7,7 +7,7 @@ import java.util.List;
  * @author : Jarry Leo
  * @date : 2019/1/25 15:19
  */
-public class UdpListenEntity implements OnDataArrivedListener {
+class UdpListenEntity implements OnDataArrivedListener {
     private UdpListenCore udpListenCore;
     private List<OnDataArrivedListener> onDataArrivedListenerList = new ArrayList<>();
 
