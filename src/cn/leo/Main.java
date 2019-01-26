@@ -1,15 +1,14 @@
 package cn.leo;
 
-import cn.leo.tcp.file.FileInfo;
-import cn.leo.tcp.file.FileTransfer;
-import cn.leo.tcp.file.NewFileRequest;
-import cn.leo.tcp.file.ReceiveFileListener;
+import cn.leo.tcp.file.*;
 import cn.leo.udp.OnDataArrivedListener;
 import cn.leo.udp.UdpFrame;
 import cn.leo.udp.UdpListener;
 import cn.leo.udp.UdpSender;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class Main {
@@ -40,8 +39,36 @@ public class Main {
                 System.out.println("文件传送失败：" + fileinfo.getFileName());
             }
         });
-        File fileSend = new File("H:/cn_windows_10_multiple_editions_version_1703_updated_july_2017_x64_dvd_10925382.iso");
-        transfer.sendFile(fileSend, "127.0.0.1", 25536);
+        transfer.setSendFileListener(new SendFileListener() {
+            @Override
+            public void onSendFileProgress(Map<String, Integer> fileProgressMap) {
+                for (Map.Entry<String, Integer> entry : fileProgressMap.entrySet()) {
+                    System.out.println(entry.getKey() + "(" + entry.getValue() + "%)");
+                }
+            }
+
+            @Override
+            public void onAccept() {
+                System.out.println("同意接收文件");
+            }
+
+            @Override
+            public void onDenied() {
+                System.out.println("拒绝接收文件");
+            }
+
+            @Override
+            public void onTransferFailed(FileInfo fileinfo) {
+
+            }
+        });
+        File fileSend1 = new File("H:/123.rar");
+        File fileSend2 = new File("H:/net.ship56.hyfwpt_shipper.zip");
+        List<File> files = new ArrayList<>();
+        files.add(fileSend1);
+        files.add(fileSend2);
+        transfer.sendFiles(files, "127.0.0.1", 25536);
+
     }
 
     private static void testUdp() {

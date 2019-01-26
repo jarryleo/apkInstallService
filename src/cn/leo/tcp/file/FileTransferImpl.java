@@ -19,17 +19,7 @@ class FileTransferImpl extends FileTransfer implements Runnable {
 
     @Override
     public void startReceiver(int port, String dir, boolean rename) {
-        FileReceiver fileReceiver = new FileReceiver(port, dir, rename, new NewFileRequest() {
-            @Override
-            public void accept() {
-
-            }
-
-            @Override
-            public void denied() {
-
-            }
-        });
+        FileReceiver fileReceiver = new FileReceiver(port, dir, rename, receiveFileListener);
         //开启接收文件端口
         fileReceiver.start();
     }
@@ -40,7 +30,7 @@ class FileTransferImpl extends FileTransfer implements Runnable {
     }
 
     @Override
-    public void sendFiles(String host, int port, List<File> fileList) {
+    public void sendFiles(List<File> fileList, String host, int port) {
         for (File file : fileList) {
             sendFile(file, host, port);
         }
@@ -60,19 +50,25 @@ class FileTransferImpl extends FileTransfer implements Runnable {
 
     @Override
     public void run() {
+        HashMap<String, Integer> progressMap = new HashMap<>();
         for (; ; ) {
             try {
                 Thread.sleep(1000);
                 //发送进度回调
                 if (sendFileListener != null) {
-                    HashMap<String, Integer> progressMap = new HashMap<>();
                     for (Map.Entry<String, List<FileSender.Sender>> listEntry : fileSendProgressMap.entrySet()) {
                         String fileName = listEntry.getKey();
                         List<FileSender.Sender> value = listEntry.getValue();
                         Long fileLength = fileSize.get(fileName);
-                        int size = 0;
+                        long size = 0;
                         for (FileSender.Sender sender : value) {
                             size += sender.getSendSize();
+                        }
+                        //删除已经发送完毕的 TODO
+                        Integer integer = progressMap.get(fileName);
+                        if (integer != null && integer == 100) {
+                            fileSendProgressMap.remove(fileName);
+                            progressMap.remove(fileName);
                         }
                         int percent = (int) (size * 100 / fileLength);
                         progressMap.put(fileName, percent);

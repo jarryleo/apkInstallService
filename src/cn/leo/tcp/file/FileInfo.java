@@ -1,5 +1,9 @@
 package cn.leo.tcp.file;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import netscape.javascript.JSObject;
+
 /**
  * @author : Jarry Leo
  * @date : 2019/1/26 10:04
@@ -50,5 +54,10 @@ public class FileInfo {
 
     public void setType(int type) {
         this.type = type;
+    }
+
+    @Override
+    public String toString() {
+        return JSONObject.toJSONString(this);
     }
 }

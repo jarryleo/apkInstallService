@@ -52,6 +52,7 @@ class FileReceiver extends Thread {
         }
     }
 
+    //区分连接类型
     private void dispatchChannel(SocketChannel receiveChannel) throws IOException {
         ByteBuffer buffer = ByteBuffer.allocate(Constant.BUFFER_SIZE);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -128,55 +129,19 @@ class FileReceiver extends Thread {
     }
 
     private void sendAcceptCode(SocketChannel receiveChannel) throws IOException {
-        //发送同意接收文件的代码 TODO
+        //发送同意接收文件的代码
+        byte[] array = new byte[1];
+        receiveChannel.write(ByteBuffer.wrap(array));
         receiveChannel.close();
     }
 
     private void sendDeniedCode(SocketChannel receiveChannel) throws IOException {
-        //发送拒绝接受文件的代码 TODO
+        //发送拒绝接受文件的代码
+        byte[] array = new byte[1];
+        array[0] = 1;
+        receiveChannel.write(ByteBuffer.wrap(array));
         receiveChannel.close();
     }
-    /*private void createSocketChannel() throws Exception {
-        long time1 = System.currentTimeMillis();
-        ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
-        serverSocketChannel.bind(new InetSocketAddress(port));
-        int num = 1;
-        long part = length;
-        if (length > Constant.FILE_PART_SIZE) {
-            num = Constant.FILE_PART_NUM;
-            part = (length + Constant.FILE_PART_NUM) / Constant.FILE_PART_NUM;
-        }
-        List<Receiver> receiverList = new ArrayList<>();
-        for (int i = 0; i < num; i++) {
-            SocketChannel receiveChannel = serverSocketChannel.accept();
-            try {
-                long start = i * part;
-                if (start + part > length) {
-                    part = length - start;
-                }
-                FileChannel fileChannel = createClipFileChannel(file, start);
-                Receiver receiver = new Receiver(receiveChannel, fileChannel);
-                IOThreadPool.execute(receiver);
-                receiverList.add(receiver);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        long receiveLength = 0;
-        while (receiveLength < length) {
-            receiveLength = 0;
-            Thread.sleep(1000);
-            for (Receiver receiver : receiverList) {
-                receiveLength += receiver.getSize();
-            }
-            System.out.println("文件已接收:" + receiveLength + "/" + length);
-        }
-        receiverList.clear();
-        long time2 = System.currentTimeMillis();
-        System.out.println("文件接收完成:" + file.getName());
-        System.out.println("耗时：" + (time2 - time1) + "ms");
-
-    }*/
 
     private FileChannel createClipFileChannel(File file, long start) throws Exception {
         RandomAccessFile raf = new RandomAccessFile(file, "rw");
@@ -207,7 +172,12 @@ class FileReceiver extends Thread {
 
         private void receiveFile(SocketChannel receiveChannel, FileChannel fileChannel) {
             try {
+                //告诉对方可以开始发送文件
+                byte[] array = new byte[1];
+                array[0] = 1;
+                receiveChannel.write(ByteBuffer.wrap(array));
                 ByteBuffer buffer = ByteBuffer.allocate(Constant.BUFFER_SIZE);
+                //开始接收文件
                 int len = 0;
                 while ((len = receiveChannel.read(buffer)) >= 0) {
                     buffer.flip();

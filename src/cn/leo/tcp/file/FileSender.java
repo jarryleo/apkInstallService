@@ -91,8 +91,25 @@ class FileSender {
         private void sendFile(SocketChannel sendChannel, FileChannel fileChannel, long length) {
             // 发送文件流
             try {
+                //发送文件头信息
+                FileInfo fileInfo = new FileInfo();
+                fileInfo.setFileName(file.getName());
+                fileInfo.setFileSize(file.length());
+                fileInfo.setStart(start);
+                fileInfo.setPartSize(length);
+                fileInfo.setType(Constant.CONNECTION_TYPE_THREAD);
+                sendChannel.write(ByteBuffer.wrap(fileInfo.toString().getBytes()));
+                //等待应答信息
                 ByteBuffer buffer = ByteBuffer.allocate(Constant.BUFFER_SIZE);
                 int len = 0;
+                while ((len = sendChannel.read(buffer)) != -1) {
+                    buffer.flip();
+                    if (len != buffer.capacity()) {
+                        break;
+                    }
+                    buffer.clear();
+                }
+                //开始发送文件
                 while ((len = fileChannel.read(buffer)) != -1 && sendSize < length) {
                     buffer.flip();
                     if (sendSize + len > length) {
@@ -140,22 +157,25 @@ class FileSender {
             FileSender fileSender = new FileSender();
             //2.发送文件信息等待应答
             SocketChannel askChannel = fileSender.createSocketChannel(host, port);
-            askChannel.write(ByteBuffer.wrap(file.getName().getBytes()));
+            FileInfo fileInfo = new FileInfo();
+            fileInfo.setFileName(file.getName());
+            fileInfo.setFileSize(file.length());
+            fileInfo.setType(Constant.CONNECTION_TYPE_REQUEST);
+            askChannel.write(ByteBuffer.wrap(fileInfo.toString().getBytes()));
             //3.等待应答信息
-            ByteBuffer buffer = ByteBuffer.allocate(6);
-            StringBuffer answerCode = new StringBuffer();
+            ByteBuffer buffer = ByteBuffer.allocate(Constant.BUFFER_SIZE);
             int len = 0;
+            int code = 0;
             while ((len = askChannel.read(buffer)) != -1) {
                 buffer.flip();
-                answerCode.append(new String(buffer.array()));
+                byte[] array = buffer.array();
+                code = array[0];
                 if (len != buffer.capacity()) {
                     break;
                 }
                 buffer.clear();
             }
-            System.out.println("server answer is " + answerCode.toString().trim());
-            if (!answerCode.toString().trim().equals("0000")) {
-                System.out.println("rec server answer error");
+            if (code != 0) {
                 askChannel.close();
                 return;
             }

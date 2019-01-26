@@ -27,11 +27,11 @@ public abstract class FileTransfer {
     /**
      * 发送文件列表
      *
+     * @param fileList 要发送的文件列表
      * @param host     目标地址
      * @param port     目标端口
-     * @param fileList 要发送的文件列表
      */
-    public abstract void sendFiles(String host, int port, List<File> fileList);
+    public abstract void sendFiles(List<File> fileList, String host, int port);
 
     /**
      * 发送文件
