@@ -6,7 +6,7 @@ import java.util.List;
  * @author : Jarry Leo
  * @date : 2019/1/25 13:27
  */
-public  class BigPacketProcessor extends PacketProcessor {
+public class BigPacketProcessor extends PacketProcessor {
 
     @Override
     public List<byte[]> subPacket(byte[] data) {
@@ -14,7 +14,7 @@ public  class BigPacketProcessor extends PacketProcessor {
     }
 
     @Override
-    public void mergePacket(byte[] data, String host) {
+    public void mergePacket(byte[] data, int length, String host) {
 
     }
 

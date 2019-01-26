@@ -35,10 +35,11 @@ class UdpListenCore extends Thread {
             receiveSocket = new DatagramSocket(port);
             byte[] bytes = new byte[packetProcessor.getPacketSize()];
             DatagramPacket packet = new DatagramPacket(bytes, packetProcessor.getPacketSize());
-            while (true) {
+            for (; ; ) {
                 receiveSocket.receive(packet);
                 String host = packet.getAddress().getHostAddress();
-                packetProcessor.mergePacket(bytes, host);
+                int length = packet.getLength();
+                packetProcessor.mergePacket(bytes, length, host);
                 if (packetProcessor.isMergeSuccess(host)) {
                     onDataArrivedListener.onDataArrived(packetProcessor.getMergedData(host), host);
                 }

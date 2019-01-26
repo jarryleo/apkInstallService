@@ -33,7 +33,7 @@ public abstract class PacketProcessor {
      * @param data 接收到的分包
      * @param host 接受的包的地址
      */
-    public abstract void mergePacket(byte[] data, String host);
+    public abstract void mergePacket(byte[] data,int length, String host);
 
 
     /**

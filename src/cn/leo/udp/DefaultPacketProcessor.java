@@ -1,6 +1,7 @@
 package cn.leo.udp;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -23,8 +24,8 @@ public class DefaultPacketProcessor extends PacketProcessor {
     }
 
     @Override
-    public void mergePacket(byte[] data, String host) {
-        bytes = data;
+    public void mergePacket(byte[] data, int length, String host) {
+        bytes = Arrays.copyOf(data, length);
     }
 
     @Override
