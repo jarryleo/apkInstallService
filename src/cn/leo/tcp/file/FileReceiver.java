@@ -72,12 +72,14 @@ public class FileReceiver extends Thread {
         }
         long receiveLength = 0;
         while (receiveLength < length) {
+            receiveLength = 0;
             Thread.sleep(1000);
             for (Receiver receiver : receiverList) {
                 receiveLength += receiver.getSize();
             }
             System.out.println("文件已接收:" + receiveLength + "/" + length);
         }
+        receiverList.clear();
         long time2 = System.currentTimeMillis();
         System.out.println("文件接收完成:" + file.getName());
         System.out.println("耗时：" + (time2 - time1) + "ms");

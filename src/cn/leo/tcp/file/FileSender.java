@@ -78,10 +78,10 @@ public class FileSender {
                 while ((len = fileChannel.read(buffer)) != -1 && sum < length) {
                     buffer.flip();
                     if (sum + len > length) {
-                        buffer.limit((int) (length - sum));
-                    } else {
-                        sendChannel.write(buffer);
+                        len = (int) (length - sum);
+                        buffer.limit(len);
                     }
+                    sendChannel.write(buffer);
                     buffer.clear();
                     sum += len;
                 }
@@ -129,13 +129,15 @@ public class FileSender {
                     }
                     Sender sender = fileSender.new Sender(
                             fileSender.createSocketChannel(host, port),
-                            fileSender.createClipFileChannel(file, start), part);
+                            fileSender.createClipFileChannel(file, start),
+                            part);
                     IOThreadPool.execute(sender);
                 } while ((start += part) < length);
             } else {
                 Sender sender = fileSender.new Sender(
                         fileSender.createSocketChannel(host, port),
-                        fileSender.createClipFileChannel(file, 0), length);
+                        fileSender.createClipFileChannel(file, 0),
+                        length);
                 IOThreadPool.execute(sender);
             }
         } catch (Exception e) {
