@@ -10,9 +10,9 @@ public interface ReceiveFileListener {
     /**
      * 新文件传输请求
      *
-     * @param callback
+     * @param request
      */
-    void onNewFile(FileInfo fileBean, NewFileRequest callback);
+    void onNewFile(FileInfo fileInfo, NewFileRequest request);
 
     /**
      * 文件传输进度
@@ -24,5 +24,10 @@ public interface ReceiveFileListener {
     /**
      * 文件传输出错
      */
-    void onTransferFailed(FileInfo fileinfo);
+    void onFileReceiveFailed(String fileName);
+
+    /**
+     * 接受文件成功
+     */
+    void onFileReceiveSuccess(String fileName);
 }

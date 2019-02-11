@@ -178,6 +178,7 @@ class FileReceiver extends Thread {
         private long partSize;
         private long breakPoint;
         private volatile long size;
+        private boolean failed;//是否接收失败
 
         public Receiver(SocketChannel receiveChannel, FileChannel fileChannel, FileInfo fileInfo, long breakPoint) {
             this.receiveChannel = receiveChannel;
@@ -186,6 +187,14 @@ class FileReceiver extends Thread {
             this.start = fileInfo.getStart();
             this.partSize = fileInfo.getPartSize();
             this.breakPoint = breakPoint;
+        }
+
+        public boolean isFailed() {
+            return failed;
+        }
+
+        public void setFailed() {
+            this.failed = true;
         }
 
         public long getStart() {
@@ -219,7 +228,6 @@ class FileReceiver extends Thread {
                 buffer.clear();
                 fileChannel = fileChannel.position(start + breakPoint);
                 size += breakPoint;
-                System.out.println("接收方发送断点值：" + breakPoint);
                 //开始接收文件
                 int len = 0;
                 while ((len = receiveChannel.read(buffer)) >= 0) {
@@ -227,8 +235,12 @@ class FileReceiver extends Thread {
                     fileChannel.write(buffer);
                     buffer.clear();
                     size += len;
+                    if (failed) {
+                        break;
+                    }
                 }
             } catch (Exception e) {
+                failed = true;
                 e.printStackTrace();
             } finally {
                 try {

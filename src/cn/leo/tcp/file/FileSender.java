@@ -16,8 +16,14 @@ import java.util.Map;
  * @date : 2019/1/26 8:50
  */
 class FileSender {
+    private static SendFileListener sendFileListener;
+
     private FileSender() {
 
+    }
+
+    static void setSendFileListener(SendFileListener listener) {
+        sendFileListener = listener;
     }
 
     /**
@@ -59,9 +65,18 @@ class FileSender {
         private long partLength;
         private int partIndex;
         private volatile long sendSize;
+        private boolean failed;//是否发送失败
 
         public long getSendSize() {
             return sendSize;
+        }
+
+        public boolean isFailed() {
+            return failed;
+        }
+
+        public void setFailed() {
+            this.failed = true;
         }
 
         public Sender(SocketChannel sendChannel,
@@ -112,7 +127,6 @@ class FileSender {
                     breakPoint = buffer.getLong();
                 }
                 buffer.clear();
-                System.out.println("发送端获取断点值：" + breakPoint);
                 sendSize += breakPoint;
                 fileChannel = fileChannel.position(start + breakPoint);
                 //开始发送文件
@@ -125,8 +139,12 @@ class FileSender {
                     sendChannel.write(buffer);
                     buffer.clear();
                     sendSize += len;
+                    if (failed) {
+                        break;
+                    }
                 }
             } catch (Exception e) {
+                failed = true;
                 e.printStackTrace();
             } finally {
                 try {
@@ -181,9 +199,17 @@ class FileSender {
                 }
                 buffer.clear();
             }
+            //应答码不为0表示拒绝接收文件
             if (code != 0) {
                 askChannel.close();
+                if (sendFileListener != null) {
+                    sendFileListener.onDenied(file.getName());
+                }
                 return;
+            } else {
+                if (sendFileListener != null) {
+                    sendFileListener.onAccept(file.getName());
+                }
             }
             //4.开始发送文件
             List<Sender> senderList = new ArrayList<>();

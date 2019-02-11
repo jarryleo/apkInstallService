@@ -17,17 +17,20 @@ public interface SendFileListener {
     /**
      * 对方接受文件传输
      */
-    void onAccept();
+    void onAccept(String fileName);
 
     /**
      * 对方拒绝文件传输
      */
-    void onDenied();
+    void onDenied(String fileName);
 
     /**
      * 文件传输出错
      */
-    void onTransferFailed(FileInfo fileinfo);
+    void onSendFailed(String fileName);
 
-
+    /**
+     * 文件传输成功
+     */
+    void onSendSuccess(String fileName);
 }

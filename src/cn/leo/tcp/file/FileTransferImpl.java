@@ -52,6 +52,7 @@ class FileTransferImpl extends FileTransfer implements Runnable {
     @Override
     public void setSendFileListener(SendFileListener sendFileListener) {
         this.sendFileListener = sendFileListener;
+        FileSender.setSendFileListener(sendFileListener);
     }
 
     @Override
@@ -68,8 +69,17 @@ class FileTransferImpl extends FileTransfer implements Runnable {
                         List<FileSender.Sender> value = listEntry.getValue();
                         Long fileLength = fileSize.get(fileName);
                         long size = 0;
+                        boolean failed = false;
                         for (FileSender.Sender sender : value) {
                             size += sender.getSendSize();
+                            failed = failed ^ sender.isFailed();
+                        }
+                        //有一个线程失败全体失败，并回调
+                        if (failed) {
+                            for (FileSender.Sender sender : value) {
+                                sender.setFailed();
+                            }
+                            sendFileListener.onSendFailed(fileName);
                         }
                         //删除已经发送完毕的回调
                         Integer integer = sendProgressMap.get(fileName);
@@ -77,6 +87,7 @@ class FileTransferImpl extends FileTransfer implements Runnable {
                             //发送完毕删除回调记录
                             fileSendProgressMap.remove(fileName);
                             sendProgressMap.remove(fileName);
+                            sendFileListener.onSendSuccess(fileName);
                         } else {
                             int percent = (int) (size * 100 / fileLength);
                             sendProgressMap.put(fileName, percent);
@@ -92,6 +103,7 @@ class FileTransferImpl extends FileTransfer implements Runnable {
                     List<FileReceiver.Receiver> receivers = receiverEntry.getValue();
                     long fileSize = 0;
                     long receivedSize = 0;
+                    boolean failed = false;
                     for (FileReceiver.Receiver receiver : receivers) {
                         //断点保存
                         long partSize = receiver.getPartSize();
@@ -101,6 +113,13 @@ class FileTransferImpl extends FileTransfer implements Runnable {
                         int partIndex = receiver.getFileInfo().getPartIndex();
                         BreakPoint.savePoint(breakPointFile, partIndex, partReceivedSize);
                         receivedSize += partReceivedSize;
+                        failed = failed ^ receiver.isFailed();
+                    }
+                    if (failed) {
+                        for (FileReceiver.Receiver receiver : receivers) {
+                            receiver.setFailed();
+                            receiveFileListener.onFileReceiveFailed(fileName);
+                        }
                     }
                     //删除已经接收完毕的回调
                     Integer integer = receiveProgressMap.get(fileName);
@@ -121,13 +140,12 @@ class FileTransferImpl extends FileTransfer implements Runnable {
                         boolean b = file.renameTo(dest);
                         //删除断点记录文件
                         breakPointFile.delete();
-                      /*if (b) {
-                            //传送文件成功回调 TODO
-                            System.out.println("重命名成功");
-                            System.out.println(dest.getPath());
+                        if (b) {
+                            //传送文件成功回调
+                            receiveFileListener.onFileReceiveSuccess(fileName);
                         } else {
-                            System.out.println("重命名失败");
-                        }*/
+                            receiveFileListener.onFileReceiveFailed(fileName);
+                        }
                     } else {
                         int percent = (int) (receivedSize * 100 / fileSize);
                         receiveProgressMap.put(fileName, percent);
