@@ -13,24 +13,7 @@ import java.util.Map;
 public class Main {
 
     public static void main(String[] args) {
-//        testUdp();
-        testFileTransfer();
-    }
-
-    private static void testFileTransfer() {
-        FileTransfer transfer = FileTransfer.getInstance();
-        transfer.startReceiver(25536, "H:/test", false);
-        transfer.setReceiveFileListener(new SimpleReceiveFileListener() {
-            @Override
-            public void onFilesProgress(Map<String, Integer> fileProgressMap) {
-                for (Map.Entry<String, Integer> entry : fileProgressMap.entrySet()) {
-                    System.out.println(entry.getKey() + "(" + entry.getValue() + "%)");
-                }
-            }
-        });
-        File file = new File("H:/win10.iso");
-        transfer.sendFile(file, "127.0.0.1", 25536);
-
+        testUdp();
     }
 
     private static void testUdp() {

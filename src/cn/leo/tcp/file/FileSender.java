@@ -248,6 +248,9 @@ class FileSender {
             fileProgressMap.put(file.getName(), senderList);
         } catch (Exception e) {
             e.printStackTrace();
+            if (sendFileListener != null) {
+                sendFileListener.onSendFailed(file.getName());
+            }
         }
     }
 

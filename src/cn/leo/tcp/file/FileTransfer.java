@@ -55,4 +55,6 @@ public abstract class FileTransfer {
         IOThreadPool.execute(fileTransfer);
         return fileTransfer;
     }
+
+    public abstract void close();
 }
