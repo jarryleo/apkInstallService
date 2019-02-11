@@ -1,8 +1,6 @@
 package cn.leo.tcp.file;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import netscape.javascript.JSObject;
 
 /**
  * @author : Jarry Leo
@@ -13,6 +11,7 @@ public class FileInfo {
     private long fileSize;
     private long start;
     private long partSize;
+    private int partIndex;
     private int type;//1 申请发送文件，2 多线程传输模块
 
 
@@ -46,6 +45,14 @@ public class FileInfo {
 
     public void setPartSize(long partSize) {
         this.partSize = partSize;
+    }
+
+    public int getPartIndex() {
+        return partIndex;
+    }
+
+    public void setPartIndex(int partIndex) {
+        this.partIndex = partIndex;
     }
 
     public int getType() {

@@ -28,4 +28,6 @@ public interface SendFileListener {
      * 文件传输出错
      */
     void onTransferFailed(FileInfo fileinfo);
+
+
 }

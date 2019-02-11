@@ -1,7 +1,5 @@
 package cn.leo.tcp.file;
 
-import sun.dc.pr.PRError;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -58,7 +56,8 @@ class FileSender {
         private FileChannel fileChannel;
         private File file;
         private long start;
-        private long length;
+        private long partLength;
+        private int partIndex;
         private volatile long sendSize;
 
         public long getSendSize() {
@@ -69,17 +68,19 @@ class FileSender {
                       FileChannel fileChannel,
                       File file,
                       long start,
-                      long length) {
+                      long partLength,
+                      int partIndex) {
             this.sendChannel = sendChannel;
             this.fileChannel = fileChannel;
             this.file = file;
             this.start = start;
-            this.length = length;
+            this.partLength = partLength;
+            this.partIndex = partIndex;
         }
 
         @Override
         public void run() {
-            sendFile(sendChannel, fileChannel, length);
+            sendFile(sendChannel, fileChannel, partLength, partIndex);
         }
 
         /**
@@ -88,7 +89,7 @@ class FileSender {
          * @param sendChannel 发送频道
          * @param fileChannel 文件频道
          */
-        private void sendFile(SocketChannel sendChannel, FileChannel fileChannel, long length) {
+        private void sendFile(SocketChannel sendChannel, FileChannel fileChannel, long partLength, int partIndex) {
             // 发送文件流
             try {
                 //发送文件头信息
@@ -96,24 +97,29 @@ class FileSender {
                 fileInfo.setFileName(file.getName());
                 fileInfo.setFileSize(file.length());
                 fileInfo.setStart(start);
-                fileInfo.setPartSize(length);
+                fileInfo.setPartSize(partLength);
+                fileInfo.setPartIndex(partIndex);
                 fileInfo.setType(Constant.CONNECTION_TYPE_THREAD);
                 sendChannel.write(ByteBuffer.wrap(fileInfo.toString().getBytes()));
-                //等待应答信息
+                //等待应答信息(获取断点)
                 ByteBuffer buffer = ByteBuffer.allocate(Constant.BUFFER_SIZE);
-                int len = 0;
-                while ((len = sendChannel.read(buffer)) != -1) {
+                int len;
+                long breakPoint = 0;
+                len = sendChannel.read(buffer);
+                if (len != -1) {
                     buffer.flip();
-                    if (len != buffer.capacity()) {
-                        break;
-                    }
-                    buffer.clear();
+                    //获取断点
+                    breakPoint = buffer.getLong();
                 }
+                buffer.clear();
+                System.out.println("发送端获取断点值：" + breakPoint);
+                sendSize += breakPoint;
+                fileChannel = fileChannel.position(start + breakPoint);
                 //开始发送文件
-                while ((len = fileChannel.read(buffer)) != -1 && sendSize < length) {
+                while ((len = fileChannel.read(buffer)) != -1 && sendSize < partLength) {
                     buffer.flip();
-                    if (sendSize + len > length) {
-                        len = (int) (length - sendSize);
+                    if (sendSize + len > partLength) {
+                        len = (int) (partLength - sendSize);
                         buffer.limit(len);
                     }
                     sendChannel.write(buffer);
@@ -181,6 +187,7 @@ class FileSender {
             }
             //4.开始发送文件
             List<Sender> senderList = new ArrayList<>();
+            int partIndex = 0;
             if (length > Constant.FILE_PART_SIZE) {
                 //文件分段
                 long part = (length + Constant.FILE_PART_NUM) / Constant.FILE_PART_NUM;
@@ -194,9 +201,11 @@ class FileSender {
                             fileSender.createClipFileChannel(file, start),
                             file,
                             start,
-                            part);
+                            part,
+                            partIndex);
                     IOThreadPool.execute(sender);
                     senderList.add(sender);
+                    partIndex++;
                 } while ((start += part) < length);
             } else {
                 //文件不分段
@@ -205,7 +214,8 @@ class FileSender {
                         fileSender.createClipFileChannel(file, 0),
                         file,
                         0,
-                        length);
+                        length,
+                        partIndex);
                 IOThreadPool.execute(sender);
                 senderList.add(sender);
             }

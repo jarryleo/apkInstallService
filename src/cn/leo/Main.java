@@ -20,7 +20,7 @@ public class Main {
 
     private static void testFileTransfer() {
         FileTransfer transfer = FileTransfer.getInstance();
-        transfer.startReceiver(25536, "H:/test", false);
+        transfer.startReceiver(25536, "H:/test", true);
         transfer.setReceiveFileListener(new ReceiveFileListener() {
             @Override
             public void onNewFile(FileInfo fileinfo, NewFileRequest callback) {
@@ -30,7 +30,7 @@ public class Main {
             @Override
             public void onFilesProgress(Map<String, Integer> fileProgressMap) {
                 for (Map.Entry<String, Integer> entry : fileProgressMap.entrySet()) {
-                    System.out.println(entry.getKey() + "(" + entry.getValue() + ")");
+                    System.out.println("接收文件：" + entry.getKey() + "(" + entry.getValue() + "%)");
                 }
             }
 

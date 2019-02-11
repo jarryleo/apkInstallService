@@ -11,6 +11,9 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author : Jarry Leo
@@ -21,12 +24,22 @@ class FileReceiver extends Thread {
     private String dir;
     private boolean rename;
     private ReceiveFileListener receiveFileListener;
+    private ConcurrentHashMap<String, List<Receiver>> receiverMap = new ConcurrentHashMap<>();
 
     public FileReceiver(int port, String dir, boolean rename, ReceiveFileListener receiveFileListener) {
         this.port = port;
         this.dir = dir;
         this.rename = rename;
         this.receiveFileListener = receiveFileListener;
+    }
+
+    public void setReceiveFileListener(ReceiveFileListener receiveFileListener) {
+        this.receiveFileListener = receiveFileListener;
+    }
+
+
+    public ConcurrentHashMap<String, List<Receiver>> getReceiverMap() {
+        return receiverMap;
     }
 
     @Override
@@ -80,20 +93,26 @@ class FileReceiver extends Thread {
 
     private void fileReceive(SocketChannel receiveChannel, FileInfo fileInfo) {
         try {
+            String fileName = fileInfo.getFileName();
             long start = fileInfo.getStart();
-            long part = fileInfo.getPartSize();
-            long length = fileInfo.getFileSize();
-            if (start + part > length) {
-                part = length - start;
-            }
-            File file = new File(dir, fileInfo.getFileName());
-            if (file.exists() && rename) {
-                //如果文件存在并且需要重命名 TODO
+            //创建临时文件接收，接收完成之后再重命名
+            File file = new File(dir, fileName + ".tmp");
+            File breakPointFile = new File(dir, fileName + ".bp");
+            int partIndex = fileInfo.getPartIndex();
+            long breakPoint = 0;
+            if (breakPointFile.exists()) {
+                //如果文件存在就读取保存的断点记录
+                breakPoint = BreakPoint.getPoint(breakPointFile, partIndex);
             }
             FileChannel fileChannel = createClipFileChannel(file, start);
-            Receiver receiver = new Receiver(receiveChannel, fileChannel);
+            Receiver receiver = new Receiver(receiveChannel, fileChannel, fileInfo, breakPoint);
             IOThreadPool.execute(receiver);
-            //receiverList.add(receiver);
+            List<Receiver> receiverList = receiverMap.get(fileName);
+            if (receiverList == null) {
+                receiverList = new ArrayList<>();
+                receiverMap.put(fileName, receiverList);
+            }
+            receiverList.add(receiver);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -151,17 +170,31 @@ class FileReceiver extends Thread {
     }
 
 
-    private class Receiver implements Runnable {
+    class Receiver implements Runnable {
         private SocketChannel receiveChannel;
         private FileChannel fileChannel;
+        private long start;
+        private long partSize;
+        private long breakPoint;
         private volatile long size;
 
-        public Receiver(SocketChannel receiveChannel, FileChannel fileChannel) {
+        public Receiver(SocketChannel receiveChannel, FileChannel fileChannel, FileInfo fileInfo, long breakPoint) {
             this.receiveChannel = receiveChannel;
             this.fileChannel = fileChannel;
+            this.start = fileInfo.getStart();
+            this.partSize = fileInfo.getPartSize();
+            this.breakPoint = breakPoint;
         }
 
-        public long getSize() {
+        public long getStart() {
+            return start;
+        }
+
+        public long getPartSize() {
+            return partSize;
+        }
+
+        public long getReceivedSize() {
             return size;
         }
 
@@ -172,11 +205,14 @@ class FileReceiver extends Thread {
 
         private void receiveFile(SocketChannel receiveChannel, FileChannel fileChannel) {
             try {
-                //告诉对方可以开始发送文件
-                byte[] array = new byte[1];
-                array[0] = 1;
-                receiveChannel.write(ByteBuffer.wrap(array));
+                //读取断点告诉对方从哪里开始发送
                 ByteBuffer buffer = ByteBuffer.allocate(Constant.BUFFER_SIZE);
+                buffer.putLong(breakPoint);
+                receiveChannel.write(buffer);
+                buffer.clear();
+                fileChannel = fileChannel.position(start + breakPoint);
+                size += breakPoint;
+                System.out.println("接收方发送断点值：" + breakPoint);
                 //开始接收文件
                 int len = 0;
                 while ((len = receiveChannel.read(buffer)) >= 0) {
