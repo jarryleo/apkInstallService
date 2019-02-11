@@ -13,12 +13,14 @@ import java.nio.channels.FileChannel;
  * 断点记录和读取
  */
 public class BreakPoint {
-    public static void savePoint(File file, long key, long value) {
+    public static void savePoint(File file, int index, long value) {
         ByteBuffer buffer = ByteBuffer.allocate(8);
         FileChannel fileChannel = null;
         try {
-            fileChannel = createClipFileChannel(file, key * 8);
+            fileChannel = createClipFileChannel(file, index * 8);
+            buffer.clear();
             buffer.putLong(value);
+            buffer.flip();
             fileChannel.write(buffer);
         } catch (Exception e) {
             e.printStackTrace();
@@ -29,20 +31,19 @@ public class BreakPoint {
                 e.printStackTrace();
             }
         }
-
-
     }
 
-    public static long getPoint(File file, long key) {
+    public static long getPoint(File file, int index) {
         long value = 0;
         ByteBuffer buffer = ByteBuffer.allocate(8);
         FileChannel fileChannel = null;
         try {
-            fileChannel = createClipFileChannel(file, key * 8);
+            fileChannel = createClipFileChannel(file, index * 8);
             int read = fileChannel.read(buffer);
             if (read != -1) {
                 buffer.flip();
                 value = buffer.getLong();
+                buffer.clear();
             }
         } catch (Exception e) {
             e.printStackTrace();

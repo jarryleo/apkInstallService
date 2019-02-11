@@ -20,7 +20,7 @@ public class Main {
 
     private static void testFileTransfer() {
         FileTransfer transfer = FileTransfer.getInstance();
-        transfer.startReceiver(25536, "H:/test", true);
+        transfer.startReceiver(25536, "H:/test", false);
         transfer.setReceiveFileListener(new ReceiveFileListener() {
             @Override
             public void onNewFile(FileInfo fileinfo, NewFileRequest callback) {
@@ -62,11 +62,11 @@ public class Main {
 
             }
         });
-        File fileSend1 = new File("H:/123.rar");
-        File fileSend2 = new File("H:/net.ship56.hyfwpt_shipper.zip");
+        File fileSend1 = new File("H:/win10.iso");
+        //File fileSend2 = new File("H:/net.ship56.hyfwpt_shipper.zip");
         List<File> files = new ArrayList<>();
         files.add(fileSend1);
-        files.add(fileSend2);
+        //files.add(fileSend2);
         transfer.sendFiles(files, "127.0.0.1", 25536);
 
     }

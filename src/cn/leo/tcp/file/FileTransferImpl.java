@@ -92,20 +92,15 @@ class FileTransferImpl extends FileTransfer implements Runnable {
                     List<FileReceiver.Receiver> receivers = receiverEntry.getValue();
                     long fileSize = 0;
                     long receivedSize = 0;
-                    long bigPart = 1;
                     for (FileReceiver.Receiver receiver : receivers) {
                         //断点保存
                         long partSize = receiver.getPartSize();
                         fileSize += partSize;
                         long partReceivedSize = receiver.getReceivedSize();
-                        long start = receiver.getStart();
-                        if (start == 0) {
-                            bigPart = partSize;
-                        }
                         //存储 文件名，利用start/part作为索引，partReceivedSize,作为value
-                        BreakPoint.savePoint(breakPointFile, start / partSize, partReceivedSize);
+                        int partIndex = receiver.getFileInfo().getPartIndex();
+                        BreakPoint.savePoint(breakPointFile, partIndex, partReceivedSize);
                         receivedSize += partReceivedSize;
-
                     }
                     //删除已经接收完毕的回调
                     Integer integer = receiveProgressMap.get(fileName);
@@ -126,7 +121,7 @@ class FileTransferImpl extends FileTransfer implements Runnable {
                         boolean b = file.renameTo(dest);
                         //删除断点记录文件
                         breakPointFile.delete();
-                      /*  if (b) {
+                      /*if (b) {
                             //传送文件成功回调 TODO
                             System.out.println("重命名成功");
                             System.out.println(dest.getPath());

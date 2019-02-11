@@ -173,6 +173,7 @@ class FileReceiver extends Thread {
     class Receiver implements Runnable {
         private SocketChannel receiveChannel;
         private FileChannel fileChannel;
+        private FileInfo fileInfo;
         private long start;
         private long partSize;
         private long breakPoint;
@@ -181,6 +182,7 @@ class FileReceiver extends Thread {
         public Receiver(SocketChannel receiveChannel, FileChannel fileChannel, FileInfo fileInfo, long breakPoint) {
             this.receiveChannel = receiveChannel;
             this.fileChannel = fileChannel;
+            this.fileInfo = fileInfo;
             this.start = fileInfo.getStart();
             this.partSize = fileInfo.getPartSize();
             this.breakPoint = breakPoint;
@@ -198,6 +200,10 @@ class FileReceiver extends Thread {
             return size;
         }
 
+        public FileInfo getFileInfo() {
+            return fileInfo;
+        }
+
         @Override
         public void run() {
             receiveFile(receiveChannel, fileChannel);
@@ -208,6 +214,7 @@ class FileReceiver extends Thread {
                 //读取断点告诉对方从哪里开始发送
                 ByteBuffer buffer = ByteBuffer.allocate(Constant.BUFFER_SIZE);
                 buffer.putLong(breakPoint);
+                buffer.flip();
                 receiveChannel.write(buffer);
                 buffer.clear();
                 fileChannel = fileChannel.position(start + breakPoint);
