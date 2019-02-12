@@ -31,7 +31,7 @@ public class Main {
         UdpListener udpListener = UdpFrame.getListener();
         udpListener.subscribe(25535, new OnDataArrivedListener() {
             @Override
-            public void onDataArrived(byte[] data, String host, int port) {
+            public void onDataArrived(byte[] data, String host) {
                 String s = new String(data);
                 System.out.println("来自 " + host + " :" + s);
                 sender.setRemoteHost(host);

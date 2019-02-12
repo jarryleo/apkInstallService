@@ -26,9 +26,9 @@ class UdpListenEntity implements OnDataArrivedListener {
     }
 
     @Override
-    public void onDataArrived(byte[] data, String host, int port) {
+    public void onDataArrived(byte[] data, String host) {
         for (OnDataArrivedListener onDataArrivedListener : onDataArrivedListenerList) {
-            onDataArrivedListener.onDataArrived(data, host, port);
+            onDataArrivedListener.onDataArrived(data, host);
         }
     }
 }

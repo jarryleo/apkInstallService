@@ -5,5 +5,5 @@ package cn.leo.udp;
  * @date : 2019/1/25 13:42
  */
 public interface OnDataArrivedListener {
-    void onDataArrived(byte[] data, String host, int port);
+    void onDataArrived(byte[] data, String host);
 }
