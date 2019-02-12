@@ -79,7 +79,7 @@ class FileReceiver extends Thread {
                 break;
             }
         }
-        String json = baos.toString();
+        String json = baos.toString("UTF-8");
         FileInfo fileInfo = JSONObject.parseObject(json, FileInfo.class);
         if (fileInfo.getType() == Constant.CONNECTION_TYPE_REQUEST) {
             //文件请求类型
@@ -118,7 +118,7 @@ class FileReceiver extends Thread {
         }
     }
 
-    private void isRequest(SocketChannel receiveChannel, FileInfo fileInfo) throws IOException {
+    private void isRequest(final SocketChannel receiveChannel, FileInfo fileInfo) throws IOException {
         if (receiveFileListener == null) {
             //没有监听，自动同意接收文件
             sendAcceptCode(receiveChannel);
