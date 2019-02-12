@@ -1,7 +1,10 @@
 package cn.leo.udp;
 
+import java.net.Inet6Address;
 import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.net.UnknownHostException;
+import java.util.Enumeration;
 import java.util.List;
 
 /**
@@ -70,11 +73,26 @@ class UdpSenderImpl implements UdpSender {
 
     private void getBroadcastHost() {
         try {
-            InetAddress address = InetAddress.getLocalHost();
-            byte[] bytes = address.getAddress();
-            bytes[3] = (byte) 255;
-            broadcastHost = InetAddress.getByAddress(bytes).getHostAddress();
-        } catch (UnknownHostException e) {
+            Enumeration nis = NetworkInterface.getNetworkInterfaces();
+            InetAddress ia = null;
+            while (nis.hasMoreElements()) {
+                NetworkInterface ni = (NetworkInterface) nis.nextElement();
+                Enumeration<InetAddress> ias = ni.getInetAddresses();
+                while (ias.hasMoreElements()) {
+                    ia = ias.nextElement();
+                    if (ia instanceof Inet6Address) {
+                        continue;// skip ipv6
+                    }
+                    String ip = ia.getHostAddress();
+                    if (!"127.0.0.1".equals(ip)) {
+                        byte[] bytes = ia.getAddress();
+                        bytes[3] = (byte) 255;
+                        broadcastHost = InetAddress.getByAddress(bytes).getHostAddress();
+                        break;
+                    }
+                }
+            }
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
